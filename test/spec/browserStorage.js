@@ -6,7 +6,7 @@
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * 
+ *
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
@@ -120,7 +120,7 @@ describe('browserStorage', () => {
       const fn = function() {
         browserStorage.getCookieStorage();
       };
-      expect(fn).toThrowError('Cannot read property \'secure\' of undefined');
+      expect(fn).toThrowError('Cannot read properties of undefined (reading \'secure\')');
     });
 
     it('requires a "secure" option', () => {
@@ -143,7 +143,7 @@ describe('browserStorage', () => {
       };
       expect(fn).not.toThrow();
     });
-    
+
     describe('useSeparateCookies: false', () => {
       it('getItem: will call storage.get', () => {
         const retVal = { fakeCookie: true };
@@ -153,7 +153,7 @@ describe('browserStorage', () => {
         expect(storage.getItem(key)).toBe(retVal);
         expect(browserStorage.storage.get).toHaveBeenCalledWith(key);
       });
-  
+
       it('setItem: without sessionCookie set, it will call storage.set, passing secure, sameSite and infinite expiration date options', () => {
         jest.spyOn(browserStorage.storage, 'set').mockReturnValue(null);
         const storage = browserStorage.getCookieStorage({ secure: 'fakey', sameSite: 'strictly fakey' });
@@ -165,7 +165,7 @@ describe('browserStorage', () => {
           sameSite: 'strictly fakey'
         });
       });
-  
+
       it('setItem: when sessionCookie is set, it will call storage.set, passing secure, sameSite and session-limited expiration date(null) options ', () => {
         jest.spyOn(browserStorage.storage, 'set').mockReturnValue(null);
         const storage = browserStorage.getCookieStorage({ secure: 'fakey', sameSite: 'strictly fakey', sessionCookie: true });
@@ -190,7 +190,7 @@ describe('browserStorage', () => {
         expect(storage.getItem).toHaveBeenCalledWith(key);
         expect(browserStorage.storage.get).not.toHaveBeenCalledWith(key);
       });
-  
+
       it('setItem: will use storage.get and storage.set internally, but not directly', () => {
         jest.spyOn(browserStorage.storage, 'set');
         const storage = browserStorage.getCookieStorage({ secure: 'fakey', sameSite: 'strictly fakey' });
