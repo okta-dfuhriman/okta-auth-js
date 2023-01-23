@@ -6,7 +6,7 @@
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * 
+ *
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
@@ -134,14 +134,15 @@ describe('getAttestation', () => {
       clientDataJSON: stringToBuffer('{}'),
       attestationObject: stringToBuffer('{}'),
     } as AuthenticatorResponse;
-    const credential = {
+    const credential: PublicKeyCredential = {
       rawId: base64UrlToBuffer('CRED-ID'),
       id: 'CRED-ID',
       type: 'public-key',
       response,
-      getClientExtensionResults: () => ({} as AuthenticationExtensionsClientOutputs)
+      getClientExtensionResults: () => ({} as AuthenticationExtensionsClientOutputs),
+      authenticatorAttachment: null
     };
-    const attestation = getAttestation(credential as PublicKeyCredential);
+    const attestation = getAttestation(credential);
     expect(attestation).toEqual({
       id: 'CRED-ID',
       clientData: btoa('{}'),
@@ -158,14 +159,15 @@ describe('getAssertion', () => {
       signature: stringToBuffer('SIG'),
       userHandle: null
     } as AuthenticatorAssertionResponse;
-    const credential = {
+    const credential: PublicKeyCredential = {
       rawId: base64UrlToBuffer('CRED-ID'),
       id: 'CRED-ID',
       type: 'public-key',
       response,
-      getClientExtensionResults: () => ({} as AuthenticationExtensionsClientOutputs)
+      getClientExtensionResults: () => ({} as AuthenticationExtensionsClientOutputs),
+      authenticatorAttachment: null
     };
-    const assertion = getAssertion(credential as PublicKeyCredential);
+    const assertion = getAssertion(credential);
     expect(assertion).toEqual({
       id: 'CRED-ID',
       clientData: btoa('{}'),
@@ -174,4 +176,3 @@ describe('getAssertion', () => {
     });
   });
 });
-
