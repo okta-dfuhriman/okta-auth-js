@@ -6,7 +6,7 @@
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * 
+ *
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
@@ -209,6 +209,46 @@ describe('token.getWithPopup', function() {
       });
   });
 
+  it('allows passing `responseMode: web_post_message` through getWithPopup, which takes precedence', function() {
+      return oauthUtil.setupPopup({
+        oktaAuthArgs: {
+          pkce: false,
+          issuer: 'https://auth-js-test.okta.com/oauth2/ORIGINAL_AUTH_SERVER_ID',
+          clientId: 'NPSfOkH5eZrTy8PMDlvx',
+          redirectUri: 'https://example.com/redirect'
+        },
+        getWithPopupArgs: [{
+          idp: 'testIdp',
+          issuer: 'https://auth-js-test.okta.com/oauth2/aus8aus76q8iphupD0h7',
+          responseMode: 'web_post_message'
+        }],
+        postMessageSrc: {
+          baseUri: 'https://auth-js-test.okta.com/oauth2/aus8aus76q8iphupD0h7/v1/authorize',
+          queryParams: {
+            'client_id': 'NPSfOkH5eZrTy8PMDlvx',
+            'redirect_uri': 'https://example.com/redirect',
+            'response_type': 'token id_token',
+            'response_mode': 'web_post_message',
+            'display': 'popup',
+            'state': oauthUtil.mockedState,
+            'nonce': oauthUtil.mockedNonce,
+            'scope': 'openid email',
+            'idp': 'testIdp'
+          }
+        },
+        postMessageResp: {
+          'access_token': tokens.authServerAccessToken,
+          'id_token': tokens.authServerIdToken,
+          'state': oauthUtil.mockedState
+        },
+        expectedResp: {
+          state: oauthUtil.mockedState,
+          tokens: {
+            idToken: tokens.authServerIdTokenParsed
+          }
+        }
+      });
+  });
   it('allows passing issuer through getWithPopup, which takes precedence', function() {
       return oauthUtil.setupPopup({
         oktaAuthArgs: {

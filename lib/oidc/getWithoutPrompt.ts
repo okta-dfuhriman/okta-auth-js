@@ -19,13 +19,12 @@ export function getWithoutPrompt(sdk: OktaAuthOAuthInterface, options: TokenPara
   if (arguments.length > 2) {
     return Promise.reject(new AuthSdkError('As of version 3.0, "getWithoutPrompt" takes only a single set of options'));
   }
-  
+
   options = clone(options) || {};
   Object.assign(options, {
     prompt: 'none',
-    responseMode: 'okta_post_message',
+    responseMode: options?.responseMode !== 'web_post_message' ? 'okta_post_message' : options?.responseMode,
     display: null
   });
   return getToken(sdk, options);
 }
-

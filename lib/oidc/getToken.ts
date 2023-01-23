@@ -48,7 +48,7 @@ import { handleOAuthResponse } from './handleOAuthResponse';
  *
  *    Forced:
  *      prompt: 'none'
- *      responseMode: 'okta_post_message'
+ *      responseMode: 'okta_post_message' (CIS) | 'web_post_message' (CIC)
  *      display: undefined
  *
  *  2) Get a token from an idp
@@ -99,7 +99,7 @@ export function getToken(sdk: OktaAuthOAuthInterface, options: TokenParams & Pop
       // Start overriding any options that don't make sense
       var sessionTokenOverrides = {
         prompt: 'none',
-        responseMode: 'okta_post_message',
+        responseMode: tokenParams?.responseMode !== 'web_post_message' ? 'okta_post_message' : tokenParams.responseMode,
         display: null
       };
 
@@ -153,7 +153,8 @@ export function getToken(sdk: OktaAuthOAuthInterface, options: TokenParams & Pop
 
           // Add listener on postMessage before window creation, so
           // postMessage isn't triggered before we're listening
-          if (tokenParams.responseMode === 'okta_post_message') {
+          if (tokenParams?.responseMode
+            && ['okta_post_message', 'web_post_message'].includes(tokenParams.responseMode)) {
             if (!sdk.features.isPopupPostMessageSupported()) {
               throw new AuthSdkError('This browser doesn\'t have full postMessage support');
             }
@@ -162,7 +163,7 @@ export function getToken(sdk: OktaAuthOAuthInterface, options: TokenParams & Pop
 
           // Redirect for authorization
           // popupWindown can be null when popup is blocked
-          if (popupWindow) { 
+          if (popupWindow) {
             popupWindow.location.assign(requestUrl);
           }
 

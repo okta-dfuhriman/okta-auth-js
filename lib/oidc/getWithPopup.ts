@@ -28,7 +28,7 @@ export function getWithPopup(sdk: OktaAuthOAuthInterface, options: TokenParams):
   options = clone(options) || {};
   Object.assign(options, {
     display: 'popup',
-    responseMode: 'okta_post_message',
+    responseMode: options?.responseMode !== 'web_post_message' ? 'okta_post_message' : options?.responseMode,
     popupWindow
   });
   return getToken(sdk, options);

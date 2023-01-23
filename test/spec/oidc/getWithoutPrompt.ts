@@ -6,7 +6,7 @@
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * 
+ *
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
@@ -66,7 +66,7 @@ describe('token.getWithoutPrompt', function() {
       oauthUtil.loadWellKnownAndKeysCache(authClient);
       oauthUtil.mockStateAndNonce();
       util.warpToUnixTime(oauthUtil.getTime());
-  
+
       // Unique state per request
       var stateCounter = 0;
       generateState.mockImplementation(function() {
@@ -74,7 +74,7 @@ describe('token.getWithoutPrompt', function() {
         states.push(stateCounter);
         return states[states.length - 1];
       });
-  
+
       // Simulate the postMessage between the window and the popup or iframe
       jest.spyOn(window, 'addEventListener').mockImplementation(function(eventName, fn) {
         if (eventName === 'message') {
@@ -345,6 +345,46 @@ describe('token.getWithoutPrompt', function() {
     });
   });
 
+  it('allows passing `responseMode: web_post_message` through getWithoutPrompt, which takes precedence', function() {
+    return oauthUtil.setupFrame({
+      oktaAuthArgs: {
+        pkce: false,
+        issuer: 'https://auth-js-test.okta.com/oauth2/aus8aus76q8iphupD0h7',
+        clientId: 'NPSfOkH5eZrTy8PMDlvx',
+        redirectUri: 'https://example.com/redirect',
+      },
+      getWithoutPromptArgs: [{
+        sessionToken: 'testSessionToken',
+        issuer: 'https://auth-js-test.okta.com/oauth2/aus8aus76q8iphupD0h7',
+        responseMode: 'web_post_message'
+      }],
+      postMessageSrc: {
+        baseUri: 'https://auth-js-test.okta.com/oauth2/aus8aus76q8iphupD0h7/v1/authorize',
+        queryParams: {
+          'client_id': 'NPSfOkH5eZrTy8PMDlvx',
+          'redirect_uri': 'https://example.com/redirect',
+          'response_type': 'token id_token',
+          'response_mode': 'web_post_message',
+          'state': oauthUtil.mockedState,
+          'nonce': oauthUtil.mockedNonce,
+          'scope': 'openid email',
+          'prompt': 'none',
+          'sessionToken': 'testSessionToken'
+        }
+      },
+      postMessageResp: {
+        'access_token': tokens.authServerAccessToken,
+        'id_token': tokens.authServerIdToken,
+        'state': oauthUtil.mockedState
+      },
+      expectedResp: {
+        state: oauthUtil.mockedState,
+        tokens: {
+          idToken: tokens.authServerIdTokenParsed
+        }
+      }
+    });
+  });
   it('allows passing issuer through getWithoutPrompt, which takes precedence', function() {
     return oauthUtil.setupFrame({
       oktaAuthArgs: {
@@ -507,7 +547,7 @@ describe('token.getWithoutPrompt', function() {
       });
     }).then(() => {
         expect(body.removeChild).toHaveBeenCalled(); // expect 2nd frame to be closed
-        expect(iframes.length).toBe(0); 
+        expect(iframes.length).toBe(0);
         // Remove any iframes that exist, so we don't taint our other tests
         oauthUtil.removeAllFrames();
     });
