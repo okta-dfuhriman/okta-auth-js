@@ -209,7 +209,7 @@ describe('token.getWithPopup', function() {
       });
   });
 
-  it('allows passing `responseMode: web_post_message` through getWithPopup, which takes precedence', function() {
+  it('allows passing `responseMode: web_message` through getWithPopup, which takes precedence', function() {
       return oauthUtil.setupPopup({
         oktaAuthArgs: {
           pkce: false,
@@ -220,7 +220,7 @@ describe('token.getWithPopup', function() {
         getWithPopupArgs: [{
           idp: 'testIdp',
           issuer: 'https://auth-js-test.okta.com/oauth2/aus8aus76q8iphupD0h7',
-          responseMode: 'web_post_message'
+          responseMode: 'web_message'
         }],
         postMessageSrc: {
           baseUri: 'https://auth-js-test.okta.com/oauth2/aus8aus76q8iphupD0h7/v1/authorize',
@@ -228,7 +228,7 @@ describe('token.getWithPopup', function() {
             'client_id': 'NPSfOkH5eZrTy8PMDlvx',
             'redirect_uri': 'https://example.com/redirect',
             'response_type': 'token id_token',
-            'response_mode': 'web_post_message',
+            'response_mode': 'web_message',
             'display': 'popup',
             'state': oauthUtil.mockedState,
             'nonce': oauthUtil.mockedNonce,

@@ -23,7 +23,7 @@ export function getWithoutPrompt(sdk: OktaAuthOAuthInterface, options: TokenPara
   options = clone(options) || {};
   Object.assign(options, {
     prompt: 'none',
-    responseMode: options?.responseMode !== 'web_post_message' ? 'okta_post_message' : options?.responseMode,
+    responseMode: options?.responseMode !== 'web_message' ? 'okta_post_message' : options?.responseMode,
     display: null
   });
   return getToken(sdk, options);
