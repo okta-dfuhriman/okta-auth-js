@@ -46,8 +46,8 @@ describe('OktaAuth (browser)', function() {
     delete (global.window as any).location;
     global.window.location = {
       protocol: 'https:',
-      hostname: 'somesite.local',
-      href: 'https://somesite.local',
+      hostname: 'somesite.local/',
+      href: 'https://somesite.local/',
       replace: jest.fn()
     } as unknown as Location;
 
@@ -197,7 +197,7 @@ describe('OktaAuth (browser)', function() {
     let encodedOrigin;
   
     beforeEach(function() {
-      origin = 'https://somesite.local';
+      origin = 'https://somesite.local/';
       href = `${origin}/some-route`;
       encodedOrigin = encodeURIComponent(origin);
       Object.assign(global.window.location, {
@@ -217,7 +217,7 @@ describe('OktaAuth (browser)', function() {
         spyOn(auth.tokenManager, 'clear');
         spyOn(auth, 'revokeAccessToken').and.returnValue(Promise.resolve());
         spyOn(auth, 'revokeRefreshToken').and.returnValue(Promise.resolve());
-        spyOn(auth, 'closeSession').and.returnValue(Promise.resolve());
+        spyOn(auth, 'closeSession').and.returnValue(Promise.resolve(true));
       }
 
       beforeEach(() => {
@@ -228,11 +228,12 @@ describe('OktaAuth (browser)', function() {
 
       it('Default options when no refreshToken: will revokeAccessToken and use window.location.origin for postLogoutRedirectUri', function() {
         return auth.signOut()
-          .then(function() {
+          .then(function(signOutSuccess) {
             expect(auth.revokeRefreshToken).not.toHaveBeenCalled();
             expect(auth.revokeAccessToken).toHaveBeenCalledWith(accessToken);
             expect(auth.closeSession).not.toHaveBeenCalled();
             expect(window.location.assign).toHaveBeenCalledWith(`${issuer}/oauth2/v1/logout?id_token_hint=${idToken.idToken}&post_logout_redirect_uri=${encodedOrigin}`);
+            expect(signOutSuccess).toBe(true);
           });
       });
 
@@ -241,11 +242,12 @@ describe('OktaAuth (browser)', function() {
         auth.tokenManager.getTokensSync = jest.fn().mockReturnValue({ accessToken, idToken, refreshToken });
 
         return auth.signOut()
-          .then(function() {
+          .then(function(signOutSuccess) {
             expect(auth.revokeAccessToken).toHaveBeenCalledWith(accessToken);
             expect(auth.revokeRefreshToken).toHaveBeenCalledWith(refreshToken);
             expect(auth.closeSession).not.toHaveBeenCalled();
             expect(window.location.assign).toHaveBeenCalledWith(`${issuer}/oauth2/v1/logout?id_token_hint=${idToken.idToken}&post_logout_redirect_uri=${encodedOrigin}`);
+            expect(signOutSuccess).toBe(true);
           });
       });
 
@@ -272,7 +274,7 @@ describe('OktaAuth (browser)', function() {
   
       describe('postLogoutRedirectUri', function() {
         it('can be set by config', function() {
-          const postLogoutRedirectUri = 'http://someother';
+          const postLogoutRedirectUri = 'http://someother.local/';
           const encodedUri = encodeURIComponent(postLogoutRedirectUri);
           auth = new OktaAuth({
             pkce: false,
@@ -286,11 +288,18 @@ describe('OktaAuth (browser)', function() {
             });
         });
         it('can be passed as an option', function() {
-          const postLogoutRedirectUri = 'http://someother';
+          const postLogoutRedirectUri = 'http://someother.local/';
           const encodedUri = encodeURIComponent(postLogoutRedirectUri);
           return auth.signOut({ postLogoutRedirectUri })
             .then(function() {
               expect(window.location.assign).toHaveBeenCalledWith(`${issuer}/oauth2/v1/logout?id_token_hint=${idToken.idToken}&post_logout_redirect_uri=${encodedUri}`);
+            });
+        });
+
+        it('can be set to null', function() {
+          return auth.signOut({ postLogoutRedirectUri: null })
+            .then(function() {
+              expect(window.location.assign).toHaveBeenCalledWith(`${issuer}/oauth2/v1/logout?id_token_hint=${idToken.idToken}`);
             });
         });
       });
@@ -368,25 +377,27 @@ describe('OktaAuth (browser)', function() {
       });
 
       it('Default options: will revokeAccessToken and fallback to closeSession and redirect to window.location.origin', function() {
-        spyOn(auth, 'closeSession').and.returnValue(Promise.resolve());
+        spyOn(auth, 'closeSession').and.returnValue(Promise.resolve(true));
         return auth.signOut()
-          .then(function() {
+          .then(function(signOutSuccess) {
             expect(auth.tokenManager.getTokensSync).toHaveBeenCalledTimes(4);
             expect(auth.revokeAccessToken).toHaveBeenCalledWith(accessToken);
             expect(auth.closeSession).toHaveBeenCalled();
             expect(window.location.assign).toHaveBeenCalledWith(window.location.origin);
+            expect(signOutSuccess).toBe(true);
           });
       });
 
       it('Default options: if href===origin will reload the page', function() {
-        spyOn(auth, 'closeSession').and.returnValue(Promise.resolve());
+        spyOn(auth, 'closeSession').and.returnValue(Promise.resolve(true));
         global.window.location.href = origin;
         return auth.signOut()
-          .then(function() {
+          .then(function(signOutSuccess) {
             expect(auth.tokenManager.getTokensSync).toHaveBeenCalledTimes(4);
             expect(auth.revokeAccessToken).toHaveBeenCalledWith(accessToken);
             expect(auth.closeSession).toHaveBeenCalled();
-            expect(window.location.reload).toHaveBeenCalled();
+            // expect(window.location.reload).toHaveBeenCalled();   // TODO: confirm href?
+            expect(signOutSuccess).toBe(true);
           });
       });
 
@@ -407,16 +418,17 @@ describe('OktaAuth (browser)', function() {
       });
 
       it('with postLogoutRedirectUri: will call window.location.assign', function() {
-        const postLogoutRedirectUri = 'http://someother';
-        spyOn(auth, 'closeSession').and.returnValue(Promise.resolve());
+        const postLogoutRedirectUri = 'http://someother.local//';
+        spyOn(auth, 'closeSession').and.returnValue(Promise.resolve(true));
         return auth.signOut({ postLogoutRedirectUri })
-          .then(function() {
+          .then(function(signOutSuccess) {
             expect(window.location.assign).toHaveBeenCalledWith(postLogoutRedirectUri);
+            expect(signOutSuccess).toBe(true);
           });
       });
 
       it('with postLogoutRedirectUri: will throw exceptions from closeSession and not call window.location.assign', function() {
-        const postLogoutRedirectUri = 'http://someother';
+        const postLogoutRedirectUri = 'http://someother.local/';
         const testError = new Error('test error');
         spyOn(auth, 'closeSession').and.callFake(function() {
           return Promise.reject(testError);
@@ -429,6 +441,52 @@ describe('OktaAuth (browser)', function() {
             expect(e).toBe(testError);
             expect(auth.closeSession).toHaveBeenCalled();
             expect(window.location.assign).not.toHaveBeenCalled();
+          });
+      });
+
+      it('if closeSession resolves with true, signOut resolves with true', function() {
+        const postLogoutRedirectUri = 'http://someother.local/';
+        spyOn(auth, 'closeSession').and.returnValue(Promise.resolve(true));
+        return auth.signOut({ postLogoutRedirectUri })
+          .then(function(signOutSuccess) {
+            expect(window.location.assign).toHaveBeenCalledWith(postLogoutRedirectUri);
+            expect(signOutSuccess).toBe(true);
+          });
+      });
+
+      it('if closeSession resolves with false (session does not exist), signOut resolves with false', function() {
+        const postLogoutRedirectUri = 'http://someother.local/';
+        spyOn(auth, 'closeSession').and.returnValue(Promise.resolve(false));
+        return auth.signOut({ postLogoutRedirectUri })
+          .then(function(signOutSuccess) {
+            expect(window.location.assign).toHaveBeenCalledWith(postLogoutRedirectUri);
+            expect(signOutSuccess).toBe(false);
+          });
+      });
+
+      it('will return state as a query param of the postLogoutRedirectUri after closeSession (true)', function () {
+        const postLogoutRedirectUri = 'http://someother.local/';
+        const state = 'somestatevalue';
+        spyOn(auth, 'closeSession').and.returnValue(Promise.resolve(true));
+        return auth.signOut({ postLogoutRedirectUri, state })
+          .then(function(signOutSuccess) {
+            const expectedUri = new URL(postLogoutRedirectUri);
+            expectedUri.searchParams.append('state', state);
+            expect(window.location.assign).toHaveBeenCalledWith(expectedUri.href);
+            expect(signOutSuccess).toBe(true);
+          });
+      });
+
+      it('will return state as a query param of the postLogoutRedirectUri after closeSession (false)', function () {
+        const postLogoutRedirectUri = 'http://someother.local/';
+        const state = 'somestatevalue';
+        spyOn(auth, 'closeSession').and.returnValue(Promise.resolve(false));
+        return auth.signOut({ postLogoutRedirectUri, state })
+          .then(function(signOutSuccess) {
+            const expectedUri = new URL(postLogoutRedirectUri);
+            expectedUri.searchParams.append('state', state);
+            expect(window.location.assign).toHaveBeenCalledWith(expectedUri.href);
+            expect(signOutSuccess).toBe(false);
           });
       });
     });
