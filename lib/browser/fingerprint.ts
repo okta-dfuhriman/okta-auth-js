@@ -6,7 +6,7 @@
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * 
+ *
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
@@ -36,7 +36,10 @@ export default function fingerprint(sdk: OktaAuthHttpInterface, options?: Finger
 
     // eslint-disable-next-line complexity
     listener = function listener(e) {
-      if (!e || !e.data || e.origin !== sdk.getIssuerOrigin()) {
+      // Added option to allow a list of trusted origins to account for more complex use cases.
+      const { allowedOrigins = [] } = sdk.options;
+
+      if (!e || !e.data || ![...allowedOrigins, sdk.getIssuerOrigin()].includes(e.origin)) {
         return;
       }
 

@@ -16,11 +16,11 @@ import { validateToken  } from '../oidc/util';
 import { isLocalhost, isIE11OrLess } from '../features';
 import SdkClock from '../clock';
 import {
-  Token, 
-  Tokens, 
-  TokenType, 
-  TokenManagerOptions, 
-  isIDToken, 
+  Token,
+  Tokens,
+  TokenType,
+  TokenManagerOptions,
+  isIDToken,
   isAccessToken,
   isRefreshToken,
   TokenManagerErrorEventHandler,
@@ -80,7 +80,7 @@ export class TokenManager implements TokenManagerInterface {
   on(event: typeof EVENT_RENEWED, handler: TokenManagerRenewEventHandler, context?: object): void;
   on(event: typeof EVENT_ERROR, handler: TokenManagerErrorEventHandler, context?: object): void;
   on(event: typeof EVENT_SET_STORAGE, handler: TokenManagerSetStorageEventHandler, context?: object): void;
-  on(event: typeof EVENT_EXPIRED | typeof EVENT_ADDED | typeof EVENT_REMOVED, 
+  on(event: typeof EVENT_EXPIRED | typeof EVENT_ADDED | typeof EVENT_REMOVED,
     handler: TokenManagerEventHandler, context?: object): void;
   on(event: TokenManagerAnyEvent, handler: TokenManagerAnyEventHandler, context?: object): void {
     if (context) {
@@ -93,7 +93,7 @@ export class TokenManager implements TokenManagerInterface {
   off(event: typeof EVENT_RENEWED, handler?: TokenManagerRenewEventHandler): void;
   off(event: typeof EVENT_ERROR, handler?: TokenManagerErrorEventHandler): void;
   off(event: typeof EVENT_SET_STORAGE, handler?: TokenManagerSetStorageEventHandler): void;
-  off(event: typeof EVENT_EXPIRED | typeof EVENT_ADDED | typeof EVENT_REMOVED, 
+  off(event: typeof EVENT_EXPIRED | typeof EVENT_ADDED | typeof EVENT_REMOVED,
     handler?: TokenManagerEventHandler): void;
   off(event: TokenManagerAnyEvent, handler?: TokenManagerAnyEventHandler): void {
     if (handler) {
@@ -110,7 +110,7 @@ export class TokenManager implements TokenManagerInterface {
     if (!this.emitter) {
       throw new AuthSdkError('Emitter should be initialized before TokenManager');
     }
-    
+
     options = Object.assign({}, DEFAULT_OPTIONS, removeNils(options));
     if (!isLocalhost()) {
       options.expireEarlySeconds = DEFAULT_OPTIONS.expireEarlySeconds;
@@ -141,7 +141,7 @@ export class TokenManager implements TokenManagerInterface {
     this.setExpireEventTimeoutAll();
     this.state.started = true;
   }
-  
+
   stop() {
     this.clearExpireEventTimeoutAll();
     this.state.started = false;
@@ -154,46 +154,46 @@ export class TokenManager implements TokenManagerInterface {
   getOptions(): TokenManagerOptions {
     return clone(this.options);
   }
-  
+
   getExpireTime(token) {
     const expireEarlySeconds = this.options.expireEarlySeconds || 0;
     var expireTime = token.expiresAt - expireEarlySeconds;
     return expireTime;
   }
-  
+
   hasExpired(token) {
     var expireTime = this.getExpireTime(token);
     return expireTime <= this.clock.now();
   }
-  
+
   emitExpired(key, token) {
     this.emitter.emit(EVENT_EXPIRED, key, token);
   }
-  
+
   emitRenewed(key, freshToken, oldToken) {
     this.emitter.emit(EVENT_RENEWED, key, freshToken, oldToken);
   }
-  
+
   emitAdded(key, token) {
     this.emitter.emit(EVENT_ADDED, key, token);
   }
-  
+
   emitRemoved(key, token?) {
     this.emitter.emit(EVENT_REMOVED, key, token);
   }
-  
+
   emitError(error) {
     this.emitter.emit(EVENT_ERROR, error);
   }
-  
+
   clearExpireEventTimeout(key) {
     clearTimeout(this.state.expireTimeouts[key] as any);
     delete this.state.expireTimeouts[key];
-  
+
     // Remove the renew promise (if it exists)
     this.state.renewPromise = null;
   }
-  
+
   clearExpireEventTimeoutAll() {
     var expireTimeouts = this.state.expireTimeouts;
     for (var key in expireTimeouts) {
@@ -203,7 +203,7 @@ export class TokenManager implements TokenManagerInterface {
       this.clearExpireEventTimeout(key);
     }
   }
-  
+
   setExpireEventTimeout(key, token) {
     if (isRefreshToken(token)) {
       return;
@@ -211,18 +211,18 @@ export class TokenManager implements TokenManagerInterface {
 
     var expireTime = this.getExpireTime(token);
     var expireEventWait = Math.max(expireTime - this.clock.now(), 0) * 1000;
-  
+
     // Clear any existing timeout
     this.clearExpireEventTimeout(key);
-  
+
     var expireEventTimeout = setTimeout(() => {
       this.emitExpired(key, token);
     }, expireEventWait);
-  
+
     // Add a new timeout
     this.state.expireTimeouts[key] = expireEventTimeout;
   }
-  
+
   setExpireEventTimeoutAll() {
     var tokenStorage = this.storage.getStorage();
     for(var key in tokenStorage) {
@@ -233,13 +233,13 @@ export class TokenManager implements TokenManagerInterface {
       this.setExpireEventTimeout(key, token);
     }
   }
-  
+
   // reset timeouts to setup autoRenew for tokens from other document context (tabs)
   resetExpireEventTimeoutAll() {
     this.clearExpireEventTimeoutAll();
     this.setExpireEventTimeoutAll();
   }
-  
+
   add(key, token: Token) {
     var tokenStorage = this.storage.getStorage();
     validateToken(token);
@@ -249,32 +249,37 @@ export class TokenManager implements TokenManagerInterface {
     this.emitAdded(key, token);
     this.setExpireEventTimeout(key, token);
   }
-  
+
   getSync(key): Token | undefined {
     var tokenStorage = this.storage.getStorage();
     return tokenStorage[key];
   }
-  
+
   async get(key): Promise<Token | undefined> {
     return this.getSync(key);
   }
-  
+
   getTokensSync(): Tokens {
     const tokens = {} as Tokens;
     const tokenStorage = this.storage.getStorage();
     Object.keys(tokenStorage).forEach(key => {
       const token = tokenStorage[key];
-      if (isAccessToken(token)) {
-        tokens.accessToken = token;
-      } else if (isIDToken(token)) {
-        tokens.idToken = token;
-      } else if (isRefreshToken(token)) { 
-        tokens.refreshToken = token;
+
+      if (['accessToken', 'idToken', 'refreshToken'].includes(key)) {
+        if (isAccessToken(token)) {
+          tokens.accessToken = token;
+        } else if (isIDToken(token)) {
+          tokens.idToken = token;
+        } else if (isRefreshToken(token)) {
+          tokens.refreshToken = token;
+        }
+      } else {
+        tokens[key] = token;
       }
     });
     return tokens;
   }
-  
+
   async getTokens(): Promise<Tokens> {
     return this.getTokensSync();
   }
@@ -283,7 +288,7 @@ export class TokenManager implements TokenManagerInterface {
     const tokenStorage = this.storage.getStorage();
     const key = Object.keys(tokenStorage).filter(key => {
       const token = tokenStorage[key];
-      return (isAccessToken(token) && type === 'accessToken') 
+      return (isAccessToken(token) && type === 'accessToken')
         || (isIDToken(token) && type === 'idToken')
         || (isRefreshToken(token) && type === 'refreshToken');
     })[0];
@@ -319,7 +324,7 @@ export class TokenManager implements TokenManagerInterface {
   setTokens(
     tokens: Tokens,
     // TODO: callbacks can be removed in the next major version OKTA-407224
-    accessTokenCb?: AccessTokenCallback, 
+    accessTokenCb?: AccessTokenCallback,
     idTokenCb?: IDTokenCallback,
     refreshTokenCb?: RefreshTokenCallback
   ): void {
@@ -349,7 +354,7 @@ export class TokenManager implements TokenManagerInterface {
       this.emitRemoved(key, token);
       handleTokenCallback(key, token);
     };
-    
+
     const types: TokenType[] = ['idToken', 'accessToken', 'refreshToken'];
     const existingTokens = this.getTokensSync();
 
@@ -360,7 +365,7 @@ export class TokenManager implements TokenManagerInterface {
         validateToken(token, type);
       }
     });
-  
+
     // add token to storage
     const storage = types.reduce((storage, type) => {
       const token = tokens[type];
@@ -390,20 +395,20 @@ export class TokenManager implements TokenManagerInterface {
       }
     });
   }
-  
+
   remove(key) {
     // Clear any listener for this token
     this.clearExpireEventTimeout(key);
-  
+
     var tokenStorage = this.storage.getStorage();
     var removedToken = tokenStorage[key];
     delete tokenStorage[key];
     this.storage.setStorage(tokenStorage);
     this.emitSetStorageEvent();
-  
+
     this.emitRemoved(key, removedToken);
   }
-  
+
   // TODO: this methods is redundant and can be removed in the next major version OKTA-407224
   async renewToken(token) {
     return this.sdk.token?.renew(token);
@@ -419,7 +424,7 @@ export class TokenManager implements TokenManagerInterface {
     if (this.state.renewPromise) {
       return this.state.renewPromise;
     }
-  
+
     try {
       var token = this.getSync(key);
       if (!token) {
@@ -428,10 +433,10 @@ export class TokenManager implements TokenManagerInterface {
     } catch (e) {
       return Promise.reject(e);
     }
-  
+
     // Remove existing autoRenew timeout
     this.clearExpireEventTimeout(key);
-  
+
     // A refresh token means a replace instead of renewal
     // Store the renew promise state, to avoid renewing again
     const renewPromise = this.state.renewPromise = this.sdk.token.renewTokens()
@@ -453,10 +458,10 @@ export class TokenManager implements TokenManagerInterface {
         // Remove existing promise key
         this.state.renewPromise = null;
       });
-  
+
     return renewPromise;
   }
-  
+
   clear() {
     const tokens = this.getTokensSync();
     this.clearExpireEventTimeoutAll();
@@ -508,5 +513,5 @@ export class TokenManager implements TokenManagerInterface {
     });
     this.setTokens(tokens);
   }
-  
+
 }

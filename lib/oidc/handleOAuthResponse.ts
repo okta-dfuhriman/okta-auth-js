@@ -49,9 +49,9 @@ export async function handleOAuthResponse(
 ): Promise<TokenResponse> {
   const pkce = sdk.options.pkce !== false;
 
-  // The result contains an authorization_code and PKCE is enabled 
+  // The result contains an authorization_code and PKCE is enabled
   // `exchangeCodeForTokens` will call /token then call `handleOauthResponse` recursively with the result
-  if (pkce && (res.code || res.interaction_code)) {
+  if (pkce && (res?.code || res?.interaction_code)) {
     return sdk.token.exchangeCodeForTokens(Object.assign({}, tokenParams, {
       authorizationCode: res.code,
       interactionCode: res.interaction_code
@@ -67,22 +67,26 @@ export async function handleOAuthResponse(
   }
 
   let scopes;
-  if (res.scope) {
+  if (res?.scope) {
     scopes = res.scope.split(' ');
   } else {
-    scopes = clone(tokenParams.scopes);
+    scopes = clone(tokenParams?.scopes);
   }
   const clientId = tokenParams.clientId || sdk.options.clientId;
 
   // Handling the result from implicit flow or PKCE token exchange
   validateResponse(res, tokenParams);
 
+  const {
+    expires_in: expiresIn,
+    token_type: tokenType,
+    id_token: idToken,
+    refresh_token: refreshToken,
+    access_token: accessToken,
+    device_secret: deviceSecret
+  } = res || {};
+
   const tokenDict = {} as Tokens;
-  const expiresIn = res.expires_in;
-  const tokenType = res.token_type;
-  const accessToken = res.access_token;
-  const idToken = res.id_token;
-  const refreshToken = res.refresh_token;
   const now = Math.floor(Date.now()/1000);
 
   if (accessToken) {
@@ -103,7 +107,7 @@ export async function handleOAuthResponse(
       refreshToken: refreshToken,
       // should not be used, this is the accessToken expire time
       // TODO: remove "expiresAt" in the next major version OKTA-407224
-      expiresAt: Number(expiresIn) + now, 
+      expiresAt: Number(expiresIn) + now,
       scopes: scopes,
       tokenUrl: urls.tokenUrl!,
       authorizeUrl: urls.authorizeUrl!,
@@ -114,13 +118,14 @@ export async function handleOAuthResponse(
   if (idToken) {
     const idJwt = sdk.token.decode(idToken);
     const idTokenObj: IDToken = {
-      idToken: idToken,
+      idToken,
       claims: idJwt.payload,
       expiresAt: idJwt.payload.exp! - idJwt.payload.iat! + now, // adjusting expiresAt to be in local time
-      scopes: scopes,
+      scopes,
       authorizeUrl: urls.authorizeUrl!,
       issuer: urls.issuer!,
-      clientId: clientId!
+      clientId: clientId!,
+      deviceSecret
     };
 
     const validationParams: TokenVerifyParams = {
@@ -139,7 +144,7 @@ export async function handleOAuthResponse(
     tokenDict.idToken = idTokenObj;
   }
 
-  // Validate received tokens against requested response types 
+  // Validate received tokens against requested response types
   if (responseType.indexOf('token') !== -1 && !tokenDict.accessToken) {
     // eslint-disable-next-line max-len
     throw new AuthSdkError('Unable to parse OAuth flow response: response type "token" was requested but "access_token" was not returned.');
@@ -155,5 +160,5 @@ export async function handleOAuthResponse(
     code: res.code,
     responseType
   };
-  
+
 }

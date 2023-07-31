@@ -1,6 +1,6 @@
 import { httpRequest, RequestOptions } from '../../http';
 import { OktaAuthConstructor } from '../../base/types';
-import { 
+import {
   PromiseQueue,
 } from '../../util';
 import { CryptoAPI } from '../../crypto/types';
@@ -61,20 +61,20 @@ export function mixinOAuth
 
     _pending: { handleLogin: boolean };
     _tokenQueue: PromiseQueue;
-    
+
     constructor(...args: any[]) {
       super(...args);
 
       this.transactionManager = new TransactionManagerConstructor(Object.assign({
         storageManager: this.storageManager,
       }, this.options.transactionManager));
-  
+
       this.pkce = {
         DEFAULT_CODE_CHALLENGE_METHOD: PKCE.DEFAULT_CODE_CHALLENGE_METHOD,
         generateVerifier: PKCE.generateVerifier,
         computeChallenge: PKCE.computeChallenge
       };
-  
+
       this._pending = { handleLogin: false };
 
       this._tokenQueue = new PromiseQueue();
@@ -90,7 +90,7 @@ export function mixinOAuth
     // inherited from subclass
     clearStorage(): void {
       super.clearStorage();
-      
+
       // Clear all local tokens
       this.tokenManager.clear();
     }
@@ -112,7 +112,7 @@ export function mixinOAuth
           try {
             accessToken = await this.tokenManager.renew('accessToken') as AccessToken;
           } catch {
-            // Renew errors will emit an "error" event 
+            // Renew errors will emit an "error" event
           }
         } else if (shouldRemove) {
           this.tokenManager.remove('accessToken');
@@ -126,7 +126,7 @@ export function mixinOAuth
           try {
             idToken = await this.tokenManager.renew('idToken') as IDToken;
           } catch {
-            // Renew errors will emit an "error" event 
+            // Renew errors will emit an "error" event
           }
         } else if (shouldRemove) {
           this.tokenManager.remove('idToken');
@@ -139,7 +139,7 @@ export function mixinOAuth
 
     async signInWithRedirect(opts: SigninWithRedirectOptions = {}) {
       const { originalUri, ...additionalParams } = opts;
-      if(this._pending.handleLogin) { 
+      if(this._pending.handleLogin) {
         // Don't trigger second round
         return;
       }
@@ -162,24 +162,24 @@ export function mixinOAuth
 
     async getUser<T extends CustomUserClaims = CustomUserClaims>(): Promise<UserClaims<T>> {
       const { idToken, accessToken } = this.tokenManager.getTokensSync();
-      return this.token.getUserInfo(accessToken, idToken);
+      return this.token.getUserInfo(accessToken as AccessToken, idToken as IDToken);
     }
-  
+
     getIdToken(): string | undefined {
       const { idToken } = this.tokenManager.getTokensSync();
-      return idToken ? idToken.idToken : undefined;
+      return idToken ? (idToken as IDToken).idToken : undefined;
     }
-  
+
     getAccessToken(): string | undefined {
       const { accessToken } = this.tokenManager.getTokensSync();
-      return accessToken ? accessToken.accessToken : undefined;
+      return accessToken ? (accessToken as AccessToken).accessToken : undefined;
     }
-  
+
     getRefreshToken(): string | undefined {
       const { refreshToken } = this.tokenManager.getTokensSync();
-      return refreshToken ? refreshToken.refreshToken : undefined;
+      return refreshToken ? (refreshToken as RefreshToken).refreshToken : undefined;
     }
-  
+
     /**
      * Store parsed tokens from redirect url
      */
@@ -189,7 +189,7 @@ export function mixinOAuth
         this.tokenManager.setTokens(tokens);
       }
     }
-  
+
     isLoginRedirect(): boolean {
       return isLoginRedirect(this);
     }
@@ -197,7 +197,7 @@ export function mixinOAuth
     isPKCE(): boolean {
       return !!this.options.pkce;
     }
-  
+
     hasResponseType(responseType: OAuthResponseType): boolean {
       let hasResponseType = false;
       if (Array.isArray(this.options.responseType) && this.options.responseType.length) {
@@ -207,7 +207,7 @@ export function mixinOAuth
       }
       return hasResponseType;
     }
-  
+
     isAuthorizationCodeFlow(): boolean {
       return this.hasResponseType('code');
     }
@@ -220,7 +220,7 @@ export function mixinOAuth
       }
       return httpRequest(this, options);
     }
-    
+
     // Revokes the access token for the application session
     async revokeAccessToken(accessToken?: AccessToken): Promise<unknown> {
       if (!accessToken) {
@@ -270,7 +270,7 @@ export function mixinOAuth
       let logoutUri = logoutUrl + '?id_token_hint=' + encodeURIComponent(idTokenHint);
       if (postLogoutRedirectUri) {
         logoutUri += '&post_logout_redirect_uri=' + encodeURIComponent(postLogoutRedirectUri);
-      } 
+      }
       // State allows option parameters to be passed to logout redirect uri
       if (state) {
         logoutUri += '&state=' + encodeURIComponent(state);
@@ -283,7 +283,7 @@ export function mixinOAuth
     // eslint-disable-next-line complexity, max-statements
     async signOut(options?: SignoutOptions): Promise<boolean> {
       options = Object.assign({}, options);
-    
+
       // postLogoutRedirectUri must be whitelisted in Okta Admin UI
       const defaultUri = window.location.origin;
       const currentUri = window.location.href;
@@ -296,13 +296,13 @@ export function mixinOAuth
         || this.options.postLogoutRedirectUri
         || defaultUri);
       const state = options?.state;
-      
-    
+
+
       let accessToken = options.accessToken;
       let refreshToken = options.refreshToken;
       const revokeAccessToken = options.revokeAccessToken !== false;
       const revokeRefreshToken = options.revokeRefreshToken !== false;
-    
+
       if (revokeRefreshToken && typeof refreshToken === 'undefined') {
         refreshToken = this.tokenManager.getTokensSync().refreshToken as RefreshToken;
       }
@@ -310,7 +310,7 @@ export function mixinOAuth
       if (revokeAccessToken && typeof accessToken === 'undefined') {
         accessToken = this.tokenManager.getTokensSync().accessToken as AccessToken;
       }
-    
+
       if (!options.idToken) {
         options.idToken = this.tokenManager.getTokensSync().idToken as IDToken;
       }

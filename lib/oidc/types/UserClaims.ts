@@ -19,12 +19,12 @@
 
  /* eslint-disable camelcase */
 export type CustomUserClaimValue = string | boolean | number;
-export type CustomUserClaim = CustomUserClaimValue | Record<string, CustomUserClaimValue>;
+export type CustomUserClaim = CustomUserClaimValue | Record<string, any>;
 export type CustomUserClaims = Record<string, CustomUserClaim | CustomUserClaim[]>;
 
 export type UserClaims<T extends CustomUserClaims = CustomUserClaims> = T & {
   auth_time?: number;
-  aud?: string;
+  aud?: string | string[];
   email?: string;
   email_verified?: boolean;
   exp?: number;

@@ -33,6 +33,9 @@ export interface OAuthParams {
   interaction_code?: string;
   acr_values?: string;
   enroll_amr_values?: string | string[];
+  connection?: string;
+  screen_hint?: string;
+  audience?: string | string[];
 }
 
 export interface OAuthResponse {
@@ -47,6 +50,7 @@ export interface OAuthResponse {
   scope?: string;
   error?: string;
   error_description?: string;
+  device_secret?: string;
 }
 
 export interface WellKnownResponse {

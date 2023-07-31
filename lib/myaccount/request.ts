@@ -1,4 +1,4 @@
-import { 
+import {
   BaseTransaction,
   EmailTransaction,
   EmailStatusTransaction,
@@ -11,7 +11,7 @@ import {
 import { httpRequest } from '../http';
 import { AuthSdkError } from '../errors';
 import { MyAccountRequestOptions as RequestOptions } from './types';
-import { OktaAuthOAuthInterface } from '../oidc/types';
+import { AccessToken, OktaAuthOAuthInterface } from '../oidc/types';
 
 export type TransactionLink = {
   href: string;
@@ -33,14 +33,14 @@ type SendRequestOptions = RequestOptions & {
 
 /* eslint-disable complexity */
 export async function sendRequest<T extends BaseTransaction> (
-  oktaAuth: OktaAuthOAuthInterface, 
+  oktaAuth: OktaAuthOAuthInterface,
   options: SendRequestOptions
 ): Promise<T | T[]> {
-  const { 
+  const {
     accessToken: accessTokenObj
   } = oktaAuth.tokenManager.getTokensSync();
-  
-  const accessToken = options.accessToken || accessTokenObj?.accessToken;
+
+  const accessToken = options.accessToken || (accessTokenObj as AccessToken)?.accessToken;
   const issuer = oktaAuth.getIssuerOrigin();
   const { url, method, payload } = options;
   const requestUrl = url.startsWith(issuer!) ? url : `${issuer}${url}`;
@@ -48,7 +48,7 @@ export async function sendRequest<T extends BaseTransaction> (
   if (!accessToken) {
     throw new AuthSdkError('AccessToken is required to request MyAccount API endpoints.');
   }
-  
+
   const res = await httpRequest(oktaAuth, {
     headers: { 'Accept': '*/*;okta-version=1.0.0' },
     accessToken,
@@ -69,14 +69,14 @@ export async function sendRequest<T extends BaseTransaction> (
   const TransactionClass = map[options.transactionClassName!] || BaseTransaction;
 
   if (Array.isArray(res)) {
-    return res.map(item => new TransactionClass(oktaAuth, { 
-      res: item, 
+    return res.map(item => new TransactionClass(oktaAuth, {
+      res: item,
       accessToken
     }));
   }
 
-  return new TransactionClass(oktaAuth, { 
-    res, 
+  return new TransactionClass(oktaAuth, {
+    res,
     accessToken
   });
 }
@@ -93,7 +93,7 @@ export type GenerateRequestFnFromLinksOptions = {
 type IRequestFnFromLinks = <T extends BaseTransaction>(payload?) => Promise<T | T[]>;
 
 export function generateRequestFnFromLinks ({
-  oktaAuth, 
+  oktaAuth,
   accessToken,
   methodName,
   links,
@@ -111,7 +111,7 @@ export function generateRequestFnFromLinks ({
       }));
     }
   }
-  
+
   const link = links[methodName];
   if (!link) {
     throw new AuthSdkError(`No link is found with methodName: ${methodName}`);

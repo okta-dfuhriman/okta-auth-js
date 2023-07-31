@@ -7,7 +7,7 @@
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * 
+ *
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
@@ -45,10 +45,13 @@ export function convertTokenParamsToOAuthParams(tokenParams: TokenParams) {
     'state': tokenParams.state,
     'acr_values': tokenParams.acrValues,
     'enroll_amr_values': tokenParams.enrollAmrValues,
+    'connection': tokenParams?.connection,
+    'screen_hint': tokenParams?.screenHint,
+    'audience': tokenParams?.audience
   };
   oauthParams = removeNils(oauthParams) as OAuthParams;
 
-  ['idp_scope', 'response_type', 'enroll_amr_values'].forEach(function (mayBeArray) {
+  ['idp_scope', 'response_type', 'enroll_amr_values', 'audience'].forEach(function (mayBeArray) {
     if (Array.isArray(oauthParams[mayBeArray])) {
       oauthParams[mayBeArray] = oauthParams[mayBeArray].join(' ');
     }
@@ -66,8 +69,8 @@ export function convertTokenParamsToOAuthParams(tokenParams: TokenParams) {
 
 export function buildAuthorizeParams(tokenParams: TokenParams) {
   var oauthQueryParams = convertTokenParamsToOAuthParams(tokenParams);
-  return toQueryString({ 
-    ...oauthQueryParams, 
+  return toQueryString({
+    ...oauthQueryParams,
     ...(tokenParams.extraParams && { ...tokenParams.extraParams })
   });
 }

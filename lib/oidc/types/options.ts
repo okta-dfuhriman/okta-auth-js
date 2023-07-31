@@ -13,104 +13,112 @@
 import { OktaAuthOptionsConstructor } from '../../base/types';
 import { OktaAuthHttpOptions } from '../../http/types';
 import { SimpleStorage } from '../../storage/types';
-import { OktaAuthOAuthInterface, SetLocationFunction } from './api';
+import { OktaAuthOAuthInterface, PopupParams, SetLocationFunction } from './api';
 import { OAuthResponseMode, OAuthResponseType } from './proto';
 import { Tokens } from './Token';
 import { TransactionManagerOptions } from './Transaction';
 
 export interface CustomUrls {
-  issuer?: string;
-  authorizeUrl?: string;
-  userinfoUrl?: string;
-  tokenUrl?: string;
-  revokeUrl?: string;
-  logoutUrl?: string;
+	issuer?: string;
+	authorizeUrl?: string;
+	userinfoUrl?: string;
+	tokenUrl?: string;
+	revokeUrl?: string;
+	logoutUrl?: string;
+	pushAuthorizationUrl?: string;
 }
 
 export interface TokenParams extends CustomUrls {
-  pkce?: boolean;
-  clientId?: string;
-  redirectUri?: string;
-  responseType?: OAuthResponseType | OAuthResponseType[] | 'none';
-  responseMode?: OAuthResponseMode;
-  state?: string;
-  nonce?: string;
-  scopes?: string[];
-  enrollAmrValues?: string | string[];
-  display?: string;
-  ignoreSignature?: boolean;
-  codeVerifier?: string;
-  authorizationCode?: string;
-  codeChallenge?: string;
-  codeChallengeMethod?: string;
-  interactionCode?: string;
-  idp?: string;
-  idpScope?: string | string[];
-  loginHint?: string;
-  maxAge?: string | number;
-  acrValues?: string;
-  prompt?: string;
-  sessionToken?: string;
-  timeout?: number;
-  extraParams?: { [propName: string]: string }; // custom authorize query params
-  // TODO: remove in the next major version
-  popupTitle?: string;
+	pkce?: boolean;
+	clientId?: string;
+	redirectUri?: string;
+	responseType?: OAuthResponseType | OAuthResponseType[] | 'none';
+	responseMode?: OAuthResponseMode;
+	state?: string;
+	nonce?: string;
+	scopes?: string[];
+	enrollAmrValues?: string | string[];
+	display?: string;
+	ignoreSignature?: boolean;
+	codeVerifier?: string;
+	authorizationCode?: string;
+	codeChallenge?: string;
+	codeChallengeMethod?: string;
+	interactionCode?: string;
+	idp?: string;
+	idpScope?: string | string[];
+	loginHint?: string;
+	maxAge?: string | number;
+	acrValues?: string;
+	prompt?: string;
+	sessionToken?: string;
+	timeout?: number;
+	extraParams?: { [propName: string]: string }; // custom authorize query params
+	popupParams?: PopupParams;
+	deviceSecret?: string;
+
+	/* CIC Custom Parameters */
+	connection?: string;
+	audience?: string | string[];
+	screenHint?: string;
+	pushAuthorizationRequest?: boolean;
+	jwtAuthorizationRequest?: boolean;
 }
 
 export interface TokenManagerOptions {
-  autoRenew?: boolean;
-  autoRemove?: boolean;
-  clearPendingRemoveTokens?: boolean;
-  secure?: boolean;
-  storage?: string | SimpleStorage;
-  storageKey?: string;
-  expireEarlySeconds?: number;
-  syncStorage?: boolean;
+	autoRenew?: boolean;
+	autoRemove?: boolean;
+	clearPendingRemoveTokens?: boolean;
+	secure?: boolean;
+	storage?: string | SimpleStorage;
+	storageKey?: string;
+	expireEarlySeconds?: number;
+	syncStorage?: boolean;
 }
 
 export interface EnrollAuthenticatorOptions extends TokenParams {
-  enrollAmrValues: string | string[];
-  acrValues: string;
+	enrollAmrValues: string | string[];
+	acrValues: string;
 }
 
 export interface SigninWithRedirectOptions extends TokenParams {
-  originalUri?: string;
+	originalUri?: string;
 }
 
 export interface RenewTokensParams extends TokenParams {
   tokens?: Tokens
 }
 
-export interface OktaAuthOAuthOptions extends
-  OktaAuthHttpOptions,
-  CustomUrls,
-  Pick<TokenParams,
-    'issuer' |
-    'clientId' |
-    'redirectUri' |
-    'responseType' |
-    'responseMode' |
-    'scopes' |
-    'state' |
-    'pkce' |
-    'ignoreSignature' |
-    'codeChallenge' |
-    'codeChallengeMethod' |
-    'maxAge' |
-    'acrValues'
-  >
-{
-  ignoreLifetime?: boolean;
-  tokenManager?: TokenManagerOptions;
-  postLogoutRedirectUri?: string;
-  maxClockSkew?: number;
-  restoreOriginalUri?: (oktaAuth: OktaAuthOAuthInterface, originalUri?: string) => Promise<void>;
+export interface OktaAuthOAuthOptions
+	extends OktaAuthHttpOptions,
+		CustomUrls,
+		Pick<
+			TokenParams,
+			| 'issuer'
+			| 'clientId'
+			| 'redirectUri'
+			| 'responseType'
+			| 'responseMode'
+			| 'scopes'
+			| 'state'
+			| 'pkce'
+			| 'ignoreSignature'
+			| 'codeChallenge'
+			| 'codeChallengeMethod'
+			| 'maxAge'
+			| 'acrValues'
+		> {
+	ignoreLifetime?: boolean;
+	tokenManager?: TokenManagerOptions;
+	postLogoutRedirectUri?: string;
+	maxClockSkew?: number;
+	restoreOriginalUri?: (oktaAuth: OktaAuthOAuthInterface, originalUri?: string) => Promise<void>;
 
-  transactionManager?: TransactionManagerOptions;
+	transactionManager?: TransactionManagerOptions;
 
-  // For server-side web applications ONLY!
-  clientSecret?: string;
-  setLocation?: SetLocationFunction;
+	// For server-side web applications ONLY!
+	clientSecret?: string;
+	setLocation?: SetLocationFunction;
 }
 
 export type OktaAuthOauthOptionsConstructor = OktaAuthOptionsConstructor<OktaAuthOAuthOptions>;

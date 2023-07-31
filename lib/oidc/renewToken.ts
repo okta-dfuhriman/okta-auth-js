@@ -11,7 +11,7 @@
  *
  */
 import { AuthSdkError } from '../errors';
-import { OktaAuthOAuthInterface, Token, Tokens, isAccessToken, AccessToken, IDToken, isIDToken } from './types';
+import { OktaAuthOAuthInterface, Token, Tokens, isAccessToken, AccessToken, IDToken, isIDToken, RefreshToken } from './types';
 import { getWithoutPrompt } from './getWithoutPrompt';
 import { renewTokensWithRefresh } from './renewTokensWithRefresh';
 
@@ -39,10 +39,10 @@ export async function renewToken(sdk: OktaAuthOAuthInterface, token: Token): Pro
   }
 
   let tokens = sdk.tokenManager.getTokensSync();
-  if (tokens.refreshToken) {
+  if (tokens?.refreshToken) {
     tokens = await renewTokensWithRefresh(sdk, {
       scopes: token.scopes,
-    }, tokens.refreshToken);
+    }, tokens.refreshToken as RefreshToken);
     return getSingleToken(token, tokens);
   }
 

@@ -37,6 +37,7 @@ export interface IDToken extends AbstractToken {
   claims: UserClaims;
   issuer: string;
   clientId: string;
+  deviceSecret?: string;
 }
 
 export type Token = AccessToken | IDToken | RefreshToken;
@@ -70,8 +71,12 @@ export function isRefreshToken(obj: any): obj is RefreshToken {
   return obj && obj.refreshToken;
 }
 
-export interface Tokens {
+export interface StandardTokens {
   accessToken?: AccessToken;
   idToken?: IDToken;
   refreshToken?: RefreshToken;
 }
+
+export type CustomKeyTokens = Record<string, Token>
+
+export type Tokens = StandardTokens | CustomKeyTokens;

@@ -6,12 +6,12 @@
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * 
+ *
  * See the License for the specific language governing permissions and limitations under the License.
  */
- 
+
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore 
+// @ts-ignore
 // Do not use this type in code, so it won't be emitted in the declaration output
 import PCancelable from 'p-cancelable';
 import { AuthSdkError } from '../errors';
@@ -44,7 +44,7 @@ const isSameAuthState = (prevState: AuthState | null, state: AuthState) => {
     return false;
   }
 
-  return prevState.isAuthenticated === state.isAuthenticated 
+  return prevState.isAuthenticated === state.isAuthenticated
     && JSON.stringify(prevState.idToken) === JSON.stringify(state.idToken)
     && JSON.stringify(prevState.accessToken) === JSON.stringify(state.accessToken)
     && prevState.error === state.error;
@@ -59,9 +59,9 @@ export class AuthStateManager
 >
 {
   _sdk: OktaAuthOAuthInterface<M, S, O>;
-  _pending: { 
+  _pending: {
     updateAuthStatePromise: any;
-    canceledTimes: number; 
+    canceledTimes: number;
   };
   _authState: AuthState | null;
   _prevAuthState: AuthState | null;
@@ -116,14 +116,14 @@ export class AuthStateManager
       getConsole().log(key, token);
       getConsole().log('Current authState', this._authState);
       getConsole().groupEnd();
-      
+
       // clear log options after logging
       this._logOptions = {};
     };
 
     const emitAuthStateChange = (authState) => {
       if (isSameAuthState(this._authState, authState)) {
-        devMode && log('unchanged'); 
+        devMode && log('unchanged');
         return;
       }
       this._prevAuthState = this._authState;
@@ -133,7 +133,7 @@ export class AuthStateManager
       devMode && log('emitted');
     };
 
-    const finalPromise = (origPromise) => {       
+    const finalPromise = (origPromise) => {
       return this._pending.updateAuthStatePromise.then(() => {
         const curPromise = this._pending.updateAuthStatePromise;
         if (curPromise && curPromise !== origPromise) {
@@ -168,7 +168,7 @@ export class AuthStateManager
           resolve();
           return;
         }
-        // emit event and resolve promise 
+        // emit event and resolve promise
         emitAuthStateChange(authState);
         resolve();
 
@@ -183,13 +183,14 @@ export class AuthStateManager
             return;
           }
 
-          const { accessToken, idToken, refreshToken } = this._sdk.tokenManager.getTokensSync();
+          const {accessToken, idToken, refreshToken, ...tokens} = this._sdk.tokenManager.getTokensSync();
           const authState = {
             accessToken,
             idToken,
             refreshToken,
+            ...tokens,
             isAuthenticated: !!(accessToken && idToken)
-          };
+          } as AuthState;
 
           // Enqueue transformAuthState so that it does not run concurrently
           const promise: Promise<AuthState> = transformAuthState
@@ -199,10 +200,10 @@ export class AuthStateManager
           promise
             .then(authState => emitAndResolve(authState))
             .catch(error => emitAndResolve({
-              accessToken, 
-              idToken, 
+              accessToken,
+              idToken,
               refreshToken,
-              isAuthenticated: false, 
+              isAuthenticated: false,
               error
             }));
         });

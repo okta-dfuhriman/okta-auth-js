@@ -33,6 +33,8 @@ export interface FeaturesAPI {
 // options that can be passed to AuthJS
 export interface OktaAuthBaseOptions {
   devMode?: boolean;
+  allowedOrigins?: string[];
+  provider?: 'okta-wic' | 'okta-cic';
 }
 
 // a class that constructs options
@@ -51,7 +53,7 @@ export interface OktaAuthBaseInterface<O extends OktaAuthBaseOptions = OktaAuthB
 export interface OktaAuthConstructor
 <
   I extends OktaAuthBaseInterface = OktaAuthBaseInterface
-> 
+>
 {
   new(...args: any[]): I;
   features: FeaturesAPI; // static class member

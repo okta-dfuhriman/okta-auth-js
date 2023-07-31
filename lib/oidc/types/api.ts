@@ -22,15 +22,28 @@ import { TransactionManagerInterface } from './TransactionManager';
 import { OktaAuthSessionInterface } from '../../session/types';
 import { Endpoints } from './endpoints';
 
+export interface PopupAppearance {
+  toolbar?: boolean;
+  scrollbars?: boolean;
+  resizable?: boolean;
+  top?: number;
+  left?: number;
+  width?: number;
+  height?: number;
+}
+
 export interface PopupParams {
   popupTitle?: string;
   popupWindow?: Window;
+  popupAppearance?: PopupAppearance
 }
+
 
 export interface TokenResponse {
   tokens: Tokens;
   state: string;
   code?: string;
+  deviceSecret?: string;
   responseType?: OAuthResponseType | OAuthResponseType[] | 'none';
 }
 
@@ -126,7 +139,7 @@ export interface OktaAuthOAuthInterface
   S extends OAuthStorageManagerInterface<M> = OAuthStorageManagerInterface<M>,
   O extends OktaAuthOAuthOptions = OktaAuthOAuthOptions,
   TM extends TransactionManagerInterface = TransactionManagerInterface
-> 
+>
   extends OktaAuthSessionInterface<S, O>,
   OriginalUriApi
 {
@@ -135,7 +148,7 @@ export interface OktaAuthOAuthInterface
   pkce: PkceAPI;
   transactionManager: TM;
   endpoints: Endpoints;
-  
+
   isPKCE(): boolean;
   getIdToken(): string | undefined;
   getAccessToken(): string | undefined;
@@ -147,7 +160,7 @@ export interface OktaAuthOAuthInterface
   storeTokensFromRedirect(): Promise<void>;
   getUser<T extends CustomUserClaims = CustomUserClaims>(): Promise<UserClaims<T>>;
   signInWithRedirect(opts?: SigninWithRedirectOptions): Promise<void>;
-  
+
   revokeAccessToken(accessToken?: AccessToken): Promise<unknown>;
   revokeRefreshToken(refreshToken?: RefreshToken): Promise<unknown>;
 }

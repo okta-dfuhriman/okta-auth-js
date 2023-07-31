@@ -11,7 +11,9 @@
  * See the License for the specific language governing permissions and limitations under the License.
  *
  */
-import { AuthnTransaction, UserClaims, OktaAuth, TokenParams } from '@okta/okta-auth-js';
+import {
+  AuthnTransaction, UserClaims, OktaAuth, IDToken, TokenParams, AccessToken, RefreshToken
+} from '@okta/okta-auth-js';
 import { expectType, expectAssignable } from 'tsd';
 
 const authClient = new OktaAuth({});
@@ -40,7 +42,15 @@ const authorizeOptions: TokenParams = {
   interactionCode: 'r34r5',
   loginHint: 'aa',
   timeout: 10,
-  popupTitle: 'Hello Okta',
+  popupParams: {
+    popupTitle: 'Hello Okta',
+    popupAppearance: {
+      width: 600,
+      height: 600,
+      left: 100,
+      top: 100
+    }
+  }
 };
 
 const authorizeOptions2: TokenParams = {
@@ -130,12 +140,12 @@ const authorizeOptions2: TokenParams = {
   expectType<boolean>(await authClient.signOut({
     postLogoutRedirectUri: `${window.location.origin}/logout/callback`,
     state: '1234',
-    idToken: tokens.idToken,
+    idToken: tokens.idToken as IDToken,
     revokeAccessToken: false,
     revokeRefreshToken: false,
-    accessToken: tokens.accessToken,
+    accessToken: tokens.accessToken as AccessToken,
   }));
   expectAssignable<boolean>(await authClient.closeSession());
-  expectType<unknown>(await authClient.revokeAccessToken(tokens.accessToken));
-  expectType<unknown>(await authClient.revokeRefreshToken(tokens.refreshToken));
+  expectType<unknown>(await authClient.revokeAccessToken(tokens.accessToken as AccessToken));
+  expectType<unknown>(await authClient.revokeRefreshToken(tokens.refreshToken as RefreshToken));
 })();

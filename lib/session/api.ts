@@ -13,67 +13,66 @@
 /* global window */
 import { omit, getLink, toQueryString } from '../util';
 import { get, post, httpRequest } from '../http';
+import { SessionObject } from './types';
 
 function sessionExists(sdk) {
-  return sdk.session.get()
-    .then(function(res) {
-      if (res.status === 'ACTIVE') {
-        return true;
-      }
-      return false;
-    })
-    .catch(function() {
-      return false;
-    });
+	return sdk.session
+		.get()
+		.then(function (res) {
+			if (res.status === 'ACTIVE') {
+				return true;
+			}
+			return false;
+		})
+		.catch(function () {
+			return false;
+		});
 }
 
-function getSession(sdk) { 
-  return get(sdk, '/api/v1/sessions/me', { withCredentials: true })
-  .then(function(session) {
-    var res = omit(session, '_links');
+function getSession(sdk) {
+	return get(sdk, '/api/v1/sessions/me', { withCredentials: true })
+		.then(function (session: SessionObject) {
+			var res: Omit<SessionObject, '_links'> = omit(session, '_links');
 
-    res.refresh = function() {
-      return post(sdk, getLink(session, 'refresh').href, {}, { withCredentials: true });
-    };
+			res.refresh = function () {
+				return post(sdk, getLink(session, 'refresh').href, {}, { withCredentials: true });
+			};
 
-    res.user = function() {
-      return get(sdk, getLink(session, 'user').href, { withCredentials: true });
-    };
+			res.user = function () {
+				return get(sdk, getLink(session, 'user').href, { withCredentials: true });
+			};
 
-    return res;
-  })
-  .catch(function() {
-    // Return INACTIVE status on failure
-    return {status: 'INACTIVE'};
-  });
+			return res;
+		})
+		.catch(function () {
+			// Return INACTIVE status on failure
+			return { status: 'INACTIVE' };
+		});
 }
 
 function closeSession(sdk) {
-  return httpRequest(sdk, {
-    url: sdk.getIssuerOrigin() + '/api/v1/sessions/me',
-    method: 'DELETE',
-    withCredentials: true
-  });
+	return httpRequest(sdk, {
+		url: sdk.getIssuerOrigin() + '/api/v1/sessions/me',
+		method: 'DELETE',
+		withCredentials: true,
+	});
 }
 
 function refreshSession(sdk) {
-  return post(sdk, '/api/v1/sessions/me/lifecycle/refresh', {}, { withCredentials: true });
+	return post(sdk, '/api/v1/sessions/me/lifecycle/refresh', {}, { withCredentials: true });
 }
 
 function setCookieAndRedirect(sdk, sessionToken, redirectUrl) {
-  redirectUrl = redirectUrl || window.location.href;
-  window.location.assign(sdk.getIssuerOrigin() + '/login/sessionCookieRedirect' +
-    toQueryString({
-      checkAccountSetupComplete: true,
-      token: sessionToken,
-      redirectUrl: redirectUrl
-    }));
+	redirectUrl = redirectUrl || window.location.href;
+	window.location.assign(
+		sdk.getIssuerOrigin() +
+			'/login/sessionCookieRedirect' +
+			toQueryString({
+				checkAccountSetupComplete: true,
+				token: sessionToken,
+				redirectUrl: redirectUrl,
+			})
+	);
 }
 
-export {
-  sessionExists,
-  getSession,
-  closeSession,
-  refreshSession,
-  setCookieAndRedirect
-};
+export { sessionExists, getSession, closeSession, refreshSession, setCookieAndRedirect };

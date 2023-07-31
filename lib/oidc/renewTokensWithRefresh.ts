@@ -38,8 +38,8 @@ export async function renewTokensWithRefresh(
 
     // Support rotating refresh tokens
     const { refreshToken } = tokens;
-    if (refreshToken && !isSameRefreshToken(refreshToken, refreshTokenObject)) {
-      sdk.tokenManager.updateRefreshToken(refreshToken);
+    if (refreshToken && !isSameRefreshToken(refreshToken as RefreshToken, refreshTokenObject)) {
+      sdk.tokenManager.updateRefreshToken(refreshToken as RefreshToken);
     }
 
     return tokens;

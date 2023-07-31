@@ -78,8 +78,18 @@ import { handleOAuthResponse } from './handleOAuthResponse';
  *
  * @param {Object} options
  * @param {Integer} [options.timeout] Time in ms before the flow is automatically terminated. Defaults to 120000
- * @param {String} [options.popupTitle] Title dispayed in the popup.
+ * @param {Object} [options.popupParams] Optional parameters to customize the popup window when getWithPopup() is used.
+ * @param {string} [options.popupParams.title] Title displayed in the popup.
  *                                      Defaults to 'External Identity Provider User Authentication'
+ * @param {Object} [options.popupParams.popupAppearance]
+ * Boolean values are translated to `yes`/`no`.
+ * @param {boolean} [options.popupParams.popupAppearance.toolbar]
+ * @param {boolean} [options.popupParams.popupAppearance.scrollbars]
+ * @param {boolean} [options.popupParams.popupAppearance.resizable]
+ * @param {number} [options.popupParams.popupAppearance.top]
+ * @param {number} [options.popupParams.popupAppearance.left]
+ * @param {number} [options.popupParams.popupAppearance.width]
+ * @param {number} [options.popupParams.popupAppearance.height]
  */
 export function getToken(sdk: OktaAuthOAuthInterface, options: TokenParams & PopupParams) {
   if (arguments.length > 2) {
@@ -99,7 +109,7 @@ export function getToken(sdk: OktaAuthOAuthInterface, options: TokenParams & Pop
       // Start overriding any options that don't make sense
       var sessionTokenOverrides = {
         prompt: 'none',
-        responseMode: tokenParams?.responseMode !== 'web_message' ? 'okta_post_message' : tokenParams.responseMode,
+        responseMode: sdk?.options?.provider === 'okta-cic' ? 'web_message' : 'okta_post_message',
         display: null
       };
 
@@ -140,7 +150,10 @@ export function getToken(sdk: OktaAuthOAuthInterface, options: TokenParams & Pop
           var iframeEl = loadFrame(requestUrl);
           return iframePromise
             .then(function (res) {
-              return handleOAuthResponse(sdk, tokenParams, res as OAuthResponse, urls);
+              if (!res) {
+                throw new AuthSdkError('Did not receive a valid OAuthResponse');
+              }
+              return handleOAuthResponse(sdk, tokenParams, res, urls);
             })
             .finally(function () {
               if (document.body.contains(iframeEl)) {
@@ -149,7 +162,7 @@ export function getToken(sdk: OktaAuthOAuthInterface, options: TokenParams & Pop
             });
 
         case 'POPUP':
-          var oauthPromise; // resolves with OAuth response
+          var oauthPromise: Promise<OAuthResponse | undefined>; // resolves with OAuth response
 
           // Add listener on postMessage before window creation, so
           // postMessage isn't triggered before we're listening
@@ -168,7 +181,7 @@ export function getToken(sdk: OktaAuthOAuthInterface, options: TokenParams & Pop
           }
 
           // The popup may be closed without receiving an OAuth response. Setup a poller to monitor the window.
-          var popupPromise = new Promise(function (resolve, reject) {
+          var popupPromise: Promise<OAuthResponse | undefined>  = new Promise(function (resolve, reject) {
             var closePoller = setInterval(function () {
               if (!popupWindow || popupWindow.closed) {
                 clearInterval(closePoller);
@@ -190,7 +203,11 @@ export function getToken(sdk: OktaAuthOAuthInterface, options: TokenParams & Pop
 
           return popupPromise
             .then(function (res) {
-              return handleOAuthResponse(sdk, tokenParams, res as OAuthResponse, urls);
+              if (!res) {
+                throw new AuthSdkError('Did not receive a valid OAuthResponse');
+              }
+
+              return handleOAuthResponse(sdk, tokenParams, res, urls);
             })
             .finally(function () {
               if (popupWindow && !popupWindow.closed) {
