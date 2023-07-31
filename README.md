@@ -44,7 +44,7 @@ This library uses semantic versioning and follows Okta's [library version policy
 | -------   | -------------------------------- |
 | `7.x`     | :heavy_check_mark: Stable        |
 | `6.x`     | :warning: Retiring on 2023-09-30 |
-| `5.x`     | :warning: Retiring on 2022-10-31 |
+| `5.x`     | :x: Retired                      |
 | `4.x`     | :x: Retired                      |
 | `3.x`     | :x: Retired                      |
 | `2.x`     | :x: Retired                      |
@@ -991,11 +991,12 @@ Signs the user out of their current [Okta session](https://developer.okta.com/do
 * Will redirect to an Okta-hosted page before returning to your app.
 * If a `postLogoutRedirectUri` has not been specified or configured, `window.location.origin` will be used as the return URI. This URI must be listed in the Okta application's [Login redirect URIs](#login-redirect-uris). If the URI is unknown or invalid the redirect will end on a 400 error page from Okta. This error will be visible to the user and cannot be handled by the app.
 * Requires a valid ID token. If an ID token is not available, `signOut` will fallback to using the XHR-based [closeSession](#closesession) method. This method may fail to sign the user out if 3rd-party cookies have been blocked by the browser.
+* If a fallback to [closeSession](#closesession) is used, `signOut()` returns a promise that resolves with the result of [closeSession](#closesession) (`true` if an existing Okta session have been closed or `false` if a session does not exist or has already been closed). Otherwise a promise resolves with `true`.
 * For more information, see [Logout](https://developer.okta.com/docs/reference/api/oidc/#logout) in the OIDC API documentation.
 
 `signOut` takes the following options:
 
-* `postLogoutRedirectUri` - Setting a value will override the `postLogoutRedirectUri` configured on the SDK.
+* `postLogoutRedirectUri` - Setting a value will override the `postLogoutRedirectUri` configured on the SDK. This will default to `window.location.origin` if no value is provided. To prevent this explicitly pass `null` to leverage the default behavior of `/logout`. If `signOut` falls back to `closeSession` `window.location.origin` will still be used as the default value, even if `null` is passed.
 * `state` - An optional value, used along with `postLogoutRedirectUri`. If set, this value will be returned as a query parameter during the redirect to the `postLogoutRedirectUri`
 * `idToken` - Specifies the ID token object. By default, `signOut` will look for a token object named `idToken` within the `TokenManager`. If you have stored the id token object in a different location, you should retrieve it first and then pass it here.
 * `clearTokensBeforeRedirect` - If `true` (default: `false`) local tokens will be removed before the logout redirect happens. Otherwise a flag (`pendingRemove`) will be added to each local token instead of clearing them immediately. Calling `oktaAuth.start()` after logout redirect will clear local tokens if flags are found. **Use this option with care**: removing local tokens before fully terminating the Okta SSO session can result in logging back in again when using [`@okta/okta-react`](https://www.npmjs.com/package/@okta/okta-react)'s [`SecureRoute`](https://github.com/okta/okta-react#secureroute) component.
@@ -1036,7 +1037,7 @@ authClient.signOut({
 > :warning: This method requires access to [third party cookies](#third-party-cookies) <br>
 > :hourglass: async
 
-Signs the user out of their current [Okta session](https://developer.okta.com/docs/api/resources/sessions) and clears all tokens stored locally in the `TokenManager`. This method is an XHR-based alternative to [signOut](#signout), which will redirect to Okta before returning to your application. Here are some points to consider when using this method:
+Signs the user out of their current [Okta session](https://developer.okta.com/docs/api/resources/sessions) and clears all tokens stored locally in the `TokenManager`. Returns a promise that resolves with `true` if an existing Okta session have been closed, or `false` if a session does not exist or has already been closed. This method is an XHR-based alternative to [signOut](#signout), which will redirect to Okta before returning to your application. Here are some points to consider when using this method:
 
 * Executes in the background. The user will see not any change to `window.location`.
 * The method will fail to sign the user out if 3rd-party cookies are blocked by the browser.
@@ -1047,8 +1048,12 @@ Signs the user out of their current [Okta session](https://developer.okta.com/do
 ```javascript
 await authClient.revokeAccessToken(); // strongly recommended
 authClient.closeSession()
-  .then(() => {
-    window.location.reload(); // optional
+  .then((sessionClosed) => {
+    if (sessionClosed) {
+      window.location.reload(); // optional
+    } else {
+      // Session does not exist or has already been closed
+    }
   })
   .catch(e => {
     if (e.xhr && e.xhr.status === 429) {

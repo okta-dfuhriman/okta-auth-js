@@ -12,10 +12,10 @@
 
 import { JWTObject } from './JWT';
 import { OAuthTransactionMeta, PKCETransactionMeta } from './meta';
-import { CustomUrls, OktaAuthOAuthOptions, SigninWithRedirectOptions, TokenParams } from './options';
+import { CustomUrls, OktaAuthOAuthOptions, SigninWithRedirectOptions, TokenParams, RenewTokensParams } from './options';
 import { OAuthResponseType } from './proto';
 import { OAuthStorageManagerInterface } from './storage';
-import { AccessToken, IDToken, RefreshToken, RevocableToken, Token, Tokens } from './Token';
+import { AccessToken, IDToken, RefreshToken, RevocableToken, Token, Tokens, TokenKind } from './Token';
 import { TokenManagerInterface } from './TokenManager';
 import { CustomUserClaims, UserClaims } from './UserClaims';
 import { TransactionManagerInterface } from './TransactionManager';
@@ -68,10 +68,11 @@ export interface TokenAPI extends BaseTokenAPI {
   getWithPopup(params?: TokenParams): Promise<TokenResponse>;
   revoke(token: RevocableToken): Promise<object>;
   renew(token: Token): Promise<Token | undefined>;
-  renewTokens(options?: TokenParams): Promise<Tokens>;
+  renewTokens(options?: RenewTokensParams): Promise<Tokens>;
   renewTokensWithRefresh(tokenParams: TokenParams, refreshTokenObject: RefreshToken): Promise<Tokens>;
   verify(token: IDToken, params?: object): Promise<IDToken>;
   isLoginRedirect(): boolean;
+  introspect(kind: TokenKind, token?: Token): any;  // TODO: make real return type
 }
 
 export interface TokenVerifyParams {
@@ -100,7 +101,7 @@ export interface IsAuthenticatedOptions {
 }
 
 export interface SignoutRedirectUrlOptions {
-  postLogoutRedirectUri?: string;
+  postLogoutRedirectUri?: string | null;
   idToken?: IDToken;
   state?: string;
 }
@@ -141,7 +142,7 @@ export interface OktaAuthOAuthInterface
   getRefreshToken(): string | undefined;
 
   isAuthenticated(options?: IsAuthenticatedOptions): Promise<boolean>;
-  signOut(opts?: SignoutOptions): Promise<void>;
+  signOut(opts?: SignoutOptions): Promise<boolean>;
   isLoginRedirect(): boolean;
   storeTokensFromRedirect(): Promise<void>;
   getUser<T extends CustomUserClaims = CustomUserClaims>(): Promise<UserClaims<T>>;

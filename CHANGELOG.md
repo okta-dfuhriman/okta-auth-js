@@ -1,5 +1,45 @@
 # Changelog
 
+## 7.4.0
+
+### Features
+
+- [#1440](https://github.com/okta/okta-auth-js/pull/1440) Fixes type of `tokenManager.getSync`
+
+- [#1439](https://github.com/okta/okta-auth-js/pull/1439) `.signOut` improvements
+  * Passing `postLogoutRedirectUri: null` to `.signOut` now omits the param from `/logout` call and will observe the behavior of `/logout`
+  * `state` is now returned as a query param to the `postLogoutRedirectUri` when `.signOut` falls back to `.closeSession`
+
+- [#1412](https://github.com/okta/okta-auth-js/pull/1412)
+  * Adds oauth2 introspect method, exposed as `authClient.token.introspect`
+  * Adds optional `tokens` param to `renewTokens`
+
+### Fixes
+
+- [#1421](https://github.com/okta/okta-auth-js/pull/1421) Throw error if there is incorrect `relatesTo` in IDX response
+
+### Other
+
+- [#1409](https://github.com/okta/okta-auth-js/pull/1409) Adds password page to React myaccount sample app
+- [#1422](https://github.com/okta/okta-auth-js/pull/1422) IDX: add `customLabel` to `Input` type
+
+## 7.3.1
+
+### Fixes
+
+- [#1426](https://github.com/okta/okta-auth-js/pull/1426) fix: Don't auto remediate SelectAuthenticator with current authenticator
+
+## 7.3.0
+
+### Features
+
+- [#1404](https://github.com/okta/okta-auth-js/pull/1404) Adds `react-native` to `package.json`
+- [#1395](https://github.com/okta/okta-auth-js/pull/1395) Changes resolve value of `closeSession()` and `signOut()` to boolean
+
+### Fixes
+
+- [#1398](https://github.com/okta/okta-auth-js/pull/1398) Fixes race condition in `LeaderElectionService` start
+
 ## 7.2.0
 
 ### Features
@@ -24,7 +64,7 @@
 
 - [#1343](https://github.com/okta/okta-auth-js/pull/1343) Supports Step Up MFA against `/authorize` and `/interact` endpoints
 
-# Other
+### Other
 
 - [#1342](https://github.com/okta/okta-auth-js/pull/1342) - fixes possible RCE in jsonpath-plus
 
